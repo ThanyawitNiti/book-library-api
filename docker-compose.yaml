@@ -5,7 +5,7 @@ services:
     container_name: library
     environment:
       POSTGRES_USER: skilllane
-      POSTGRES_PASSWORD: a123456
+      POSTGRES_PASSWORD: password123
       POSTGRES_DB: library
     ports:
       - "5432:5432"
