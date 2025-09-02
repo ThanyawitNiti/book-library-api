@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Book } from '../books-entities/book.entity';
 import { CreateBookDto, UpdateBookDto } from '../books-dto/bookDto.dto';
 import type * as multer from 'multer';
@@ -9,14 +9,41 @@ export class BooksService {
   constructor(
     @InjectRepository(Book)
     private readonly bookRepo: Repository<Book>,
+    private readonly dataSource: DataSource,
   ) {}
 
-  async create(dto: CreateBookDto,file: multer.File): Promise<Book> {
-    const book = this.bookRepo.create(dto);
-    if (file) {
-      book.coverImage = file.filename;
+  async create(dto: CreateBookDto, file: multer.File): Promise<Book> {
+    // เริ่ม transaction
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      // หาชื่อของหนังสือหากพบให้เพิ่มจำนวน
+      const foundBooks = await this.findByTitle(dto.title);
+      console.log(foundBooks,'foundBooks')
+      if (foundBooks.length > 0) {
+        //เพิ่มจำนวนหนังสือ
+        foundBooks[0].quantity += 1;
+        const updateTotal = await queryRunner.manager.save(foundBooks[0]);
+        await queryRunner.commitTransaction();
+        return updateTotal;
+      } else {
+        //  หากไม่พบให้ สร้างใหม่
+        const book = queryRunner.manager.create(Book, {
+          ...dto,
+          quantity: dto.quantity ?? 1,
+          coverImage: file ? `/uploads/${file.filename}` : undefined,
+        });
+        const newBook = await queryRunner.manager.save(book);
+        await queryRunner.commitTransaction();
+        return newBook;
+      }
+    } catch {
+      await queryRunner.rollbackTransaction();
+      throw new Error('Failed to create book');
+    } finally {
+      await queryRunner.release();
     }
-    return this.bookRepo.save(book);
   }
 
   async findAll(): Promise<Book[]> {
@@ -40,8 +67,8 @@ export class BooksService {
     await this.bookRepo.delete(id);
   }
 
-  async findByIsbn(isbn: string): Promise<Book[]> {
-    return this.bookRepo.find({ where: { isbn } });
+  async findByTitle(title: string): Promise<Book[]> {
+    return this.bookRepo.find({ where: { title } });
   }
   // async borrow(id: number): Promise<Book> {
   //   const book = await this.findOne(id);

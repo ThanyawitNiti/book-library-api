@@ -17,6 +17,9 @@ export class CreateBookDto {
 
   @IsOptional()
   coverImage?: string;
+
+  @IsNumber()
+  quantity: number;
 }
 
 export class UpdateBookDto extends PartialType(CreateBookDto) {}
