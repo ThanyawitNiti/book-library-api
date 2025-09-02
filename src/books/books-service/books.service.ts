@@ -1,26 +1,52 @@
-import { Injectable } from '@nestjs/common';
-import { CreateBookDto } from './books-dto/create-book.dto';
-import { UpdateBookDto } from './books-dto/update-book.dto';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Book } from '../books-entities/book.entity';
+import { CreateBookDto,UpdateBookDto  } from '../books-dto/bookDto.dto';
 
 @Injectable()
 export class BooksService {
-  create(createBookDto: CreateBookDto) {
-    return 'This action adds a new book';
+  constructor(
+    @InjectRepository(Book)
+    private readonly bookRepo: Repository<Book>,
+  ) {}
+
+  async create(dto: CreateBookDto): Promise<Book> {
+    const book = this.bookRepo.create(dto);
+    return this.bookRepo.save(book);
   }
 
-  findAll() {
-    return `This action returns all books`;
+  async findAll(): Promise<Book[]> {
+    return this.bookRepo.find();
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} book`;
+  async findOne(id: number): Promise<Book> {
+    const book = await this.bookRepo.findOneBy({ id });
+    if (!book) throw new NotFoundException('Book not found');
+    return book;
   }
 
-  update(id: number, updateBookDto: UpdateBookDto) {
-    return `This action updates a #${id} book`;
+  async update(id: number, dto: UpdateBookDto): Promise<Book> {
+    await this.findOne(id);
+    await this.bookRepo.update(id, dto);
+    return this.findOne(id);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} book`;
+  async remove(id: number): Promise<void> {
+    await this.findOne(id);
+    await this.bookRepo.delete(id);
+  }
+
+  async borrow(id: number): Promise<Book> {
+    const book = await this.findOne(id);
+    if (book.quantity <= 0) throw new Error('No available copies');
+    book.quantity -= 1;
+    return this.bookRepo.save(book);
+  }
+
+  async returnBook(id: number): Promise<Book> {
+    const book = await this.findOne(id);
+    book.quantity += 1;
+    return this.bookRepo.save(book);
   }
 }
