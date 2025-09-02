@@ -19,5 +19,4 @@ export class Book {
 
   @Column({ nullable: true })
   coverImage: string;
-
 }

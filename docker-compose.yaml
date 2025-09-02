@@ -1,0 +1,16 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:15
+    container_name: library
+    environment:
+      POSTGRES_USER: skilllane
+      POSTGRES_PASSWORD: a123456
+      POSTGRES_DB: library
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_library:/var/lib/postgresql/data
+
+volumes:
+  db_library:

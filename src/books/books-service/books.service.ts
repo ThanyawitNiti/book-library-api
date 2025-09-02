@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Book } from '../books-entities/book.entity';
-import { CreateBookDto,UpdateBookDto  } from '../books-dto/bookDto.dto';
+import { CreateBookDto, UpdateBookDto } from '../books-dto/bookDto.dto';
 
 @Injectable()
 export class BooksService {
@@ -37,16 +37,16 @@ export class BooksService {
     await this.bookRepo.delete(id);
   }
 
-  async borrow(id: number): Promise<Book> {
-    const book = await this.findOne(id);
-    if (book.quantity <= 0) throw new Error('No available copies');
-    book.quantity -= 1;
-    return this.bookRepo.save(book);
-  }
+  // async borrow(id: number): Promise<Book> {
+  //   const book = await this.findOne(id);
+  //   if (book.quantity <= 0) throw new Error('No available copies');
+  //   book.quantity -= 1;
+  //   return this.bookRepo.save(book);
+  // }
 
-  async returnBook(id: number): Promise<Book> {
-    const book = await this.findOne(id);
-    book.quantity += 1;
-    return this.bookRepo.save(book);
-  }
+  // async returnBook(id: number): Promise<Book> {
+  //   const book = await this.findOne(id);
+  //   book.quantity += 1;
+  //   return this.bookRepo.save(book);
+  // }
 }
