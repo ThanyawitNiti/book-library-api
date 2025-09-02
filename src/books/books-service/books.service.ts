@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Book } from '../books-entities/book.entity';
 import { CreateBookDto, UpdateBookDto } from '../books-dto/bookDto.dto';
-
+import type * as multer from 'multer';
 @Injectable()
 export class BooksService {
   constructor(
@@ -11,8 +11,11 @@ export class BooksService {
     private readonly bookRepo: Repository<Book>,
   ) {}
 
-  async create(dto: CreateBookDto): Promise<Book> {
+  async create(dto: CreateBookDto,file: multer.File): Promise<Book> {
     const book = this.bookRepo.create(dto);
+    if (file) {
+      book.coverImage = file.filename;
+    }
     return this.bookRepo.save(book);
   }
 
@@ -37,6 +40,9 @@ export class BooksService {
     await this.bookRepo.delete(id);
   }
 
+  async findByIsbn(isbn: string): Promise<Book[]> {
+    return this.bookRepo.find({ where: { isbn } });
+  }
   // async borrow(id: number): Promise<Book> {
   //   const book = await this.findOne(id);
   //   if (book.quantity <= 0) throw new Error('No available copies');
