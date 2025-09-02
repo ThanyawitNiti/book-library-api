@@ -9,6 +9,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFile,
+  Query,
 } from '@nestjs/common';
 import { BooksService } from '../books-service/books.service';
 import { CreateBookDto, UpdateBookDto } from '../books-dto/bookDto.dto';
@@ -28,8 +29,8 @@ export class BooksController {
     @Body() createBookDto: CreateBookDto,
     @UploadedFile() file: multer.File,
   ) {
-    console.log(createBookDto)
-    return this.booksService.create(createBookDto,file);
+    console.log(createBookDto);
+    return this.booksService.create(createBookDto, file);
   }
 
   @Get()
@@ -37,10 +38,18 @@ export class BooksController {
     return this.booksService.findAll();
   }
 
+  @Get('search')
+  search(@Query('title') title: string) {
+    console.log(title, 'This is title');
+    return this.booksService.searchBook(title);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.booksService.findOne(+id);
   }
+
+  
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto) {

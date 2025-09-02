@@ -5,7 +5,7 @@ export class Book {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column()
+  @Column(({ type: 'varchar' }))
   title: string;
 
   @Column()

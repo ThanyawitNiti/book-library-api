@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, ILike, Repository } from 'typeorm';
 import { Book } from '../books-entities/book.entity';
 import { CreateBookDto, UpdateBookDto } from '../books-dto/bookDto.dto';
 import type * as multer from 'multer';
@@ -69,6 +69,13 @@ export class BooksService {
 
   async findByTitle(title: string): Promise<Book[]> {
     return this.bookRepo.find({ where: { title } });
+  }
+
+  async searchBook(title: string): Promise<Book[]> {
+    console.log('searchBook -> title:', title);
+    return this.bookRepo.find({
+      where: { title: ILike(`%${title}%`) },
+    });
   }
   // async borrow(id: number): Promise<Book> {
   //   const book = await this.findOne(id);
