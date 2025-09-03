@@ -30,8 +30,6 @@ export class BooksController {
     @Body() createBookDto: CreateBookDto,
     @UploadedFile() file: multer.File,
   ) {
-    console.log(createBookDto,'Book dto');
-    console.log(file,'File')
     return this.booksService.create(createBookDto, file);
   }
 

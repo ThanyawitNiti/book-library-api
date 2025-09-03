@@ -23,24 +23,14 @@ export class BooksService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      // // หาชื่อของหนังสือหากพบให้เพิ่มจำนวน
+      // หาชื่อของหนังสือหากพบให้เพิ่มจำนวน
       const foundBooks = await this.findByIsbn(dto.isbn);
       if (foundBooks.length > 0) {
         throw new BadRequestException('ISBN already exists');
       }
-      // console.log(foundBooks, 'foundBooks');
-      // if (foundBooks.length > 0) {
-      //   //เพิ่มจำนวนหนังสือ
-      //   foundBooks[0].quantity += 1;
-      //   const updateTotal = await queryRunner.manager.save(foundBooks[0]);
-      //   await queryRunner.commitTransaction();
-      //   return updateTotal;
-      // } else {
       //  หากไม่พบให้ สร้างใหม่
       const book = queryRunner.manager.create(Book, {
         ...dto,
-        // quantity: dto.quantity ?? 1,
-        // cover_image: file ? `/uploads/${file.filename}` : undefined,
         cover_image: file
           ? `http://localhost:8080/uploads/${file.filename}`
           : undefined,
@@ -48,7 +38,6 @@ export class BooksService {
       const newBook = await queryRunner.manager.save(book);
       await queryRunner.commitTransaction();
       return newBook;
-      // }
     } catch (error) {
       await queryRunner.rollbackTransaction();
       throw error;
@@ -67,11 +56,6 @@ export class BooksService {
     return book;
   }
 
-  // async update(id: number, dto: UpdateBookDto): Promise<Book> {
-  //   await this.findOne(id);
-  //   await this.bookRepo.update(id, dto);
-  //   return this.findOne(id);
-  // }
   async update(
     id: number,
     dto: UpdateBookDto,
