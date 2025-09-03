@@ -33,6 +33,16 @@ export class BooksController {
     return this.booksService.create(createBookDto, file);
   }
 
+  @Post('borrow/:id/:isbn')
+  borrowBook(@Param('id') id: string, @Param('isbn') isbn: string) {
+    return this.booksService.borrowBook(+id, isbn);
+  }
+
+  @Post('return/:id/:isbn')
+  returnBook(@Param('id') id: string, @Param('isbn') isbn: string) {
+    return this.booksService.returnBook(+id, isbn);
+  }
+
   @Get()
   findAll() {
     return this.booksService.findAll();

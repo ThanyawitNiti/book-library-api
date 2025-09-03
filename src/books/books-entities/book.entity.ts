@@ -5,13 +5,13 @@ export class Book {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column(({ type: 'varchar' }))
+  @Column({ type: 'varchar' })
   title: string;
 
   @Column()
   author: string;
 
-  @Column()
+  @Column({ type: 'varchar', unique: true })
   isbn: string;
 
   @Column({ nullable: true })

@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  HttpException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, ILike, Repository } from 'typeorm';
 import { Book } from '../books-entities/book.entity';
@@ -18,29 +23,32 @@ export class BooksService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      // หาชื่อของหนังสือหากพบให้เพิ่มจำนวน
-      const foundBooks = await this.findByTitle(dto.title);
-      console.log(foundBooks,'foundBooks')
+      // // หาชื่อของหนังสือหากพบให้เพิ่มจำนวน
+      const foundBooks = await this.findByIsbn(dto.isbn);
       if (foundBooks.length > 0) {
-        //เพิ่มจำนวนหนังสือ
-        foundBooks[0].quantity += 1;
-        const updateTotal = await queryRunner.manager.save(foundBooks[0]);
-        await queryRunner.commitTransaction();
-        return updateTotal;
-      } else {
-        //  หากไม่พบให้ สร้างใหม่
-        const book = queryRunner.manager.create(Book, {
-          ...dto,
-          quantity: dto.quantity ?? 1,
-          coverImage: file ? `/uploads/${file.filename}` : undefined,
-        });
-        const newBook = await queryRunner.manager.save(book);
-        await queryRunner.commitTransaction();
-        return newBook;
+        throw new BadRequestException('ISBN already exists');
       }
-    } catch {
+      // console.log(foundBooks, 'foundBooks');
+      // if (foundBooks.length > 0) {
+      //   //เพิ่มจำนวนหนังสือ
+      //   foundBooks[0].quantity += 1;
+      //   const updateTotal = await queryRunner.manager.save(foundBooks[0]);
+      //   await queryRunner.commitTransaction();
+      //   return updateTotal;
+      // } else {
+      //  หากไม่พบให้ สร้างใหม่
+      const book = queryRunner.manager.create(Book, {
+        ...dto,
+        // quantity: dto.quantity ?? 1,
+        coverImage: file ? `/uploads/${file.filename}` : undefined,
+      });
+      const newBook = await queryRunner.manager.save(book);
+      await queryRunner.commitTransaction();
+      return newBook;
+      // }
+    } catch (error) {
       await queryRunner.rollbackTransaction();
-      throw new Error('Failed to create book');
+      throw error;
     } finally {
       await queryRunner.release();
     }
@@ -71,22 +79,80 @@ export class BooksService {
     return this.bookRepo.find({ where: { title } });
   }
 
+  async findByIsbn(isbn: string): Promise<Book[]> {
+    return this.bookRepo.find({ where: { isbn } });
+  }
+
   async searchBook(title: string): Promise<Book[]> {
     console.log('searchBook -> title:', title);
     return this.bookRepo.find({
       where: { title: ILike(`%${title}%`) },
     });
   }
-  // async borrow(id: number): Promise<Book> {
-  //   const book = await this.findOne(id);
-  //   if (book.quantity <= 0) throw new Error('No available copies');
-  //   book.quantity -= 1;
-  //   return this.bookRepo.save(book);
-  // }
 
-  // async returnBook(id: number): Promise<Book> {
-  //   const book = await this.findOne(id);
-  //   book.quantity += 1;
-  //   return this.bookRepo.save(book);
-  // }
+  async borrowBook(id: number, isbn: string): Promise<Book> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // lock แถวนี้ไว้จนจบ transaction
+      const book = await queryRunner.manager.findOne(Book, {
+        where: { id, isbn },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!book) {
+        throw new NotFoundException('Book not found');
+      }
+      if (book.quantity <= 0) {
+        throw new BadRequestException('No copies available');
+      }
+
+      book.quantity -= 1;
+      const savedBook = await queryRunner.manager.save(book);
+
+      //  commit เมื่อทุกอย่างสำเร็จ
+      await queryRunner.commitTransaction();
+      return savedBook;
+    } catch (error) {
+      // rollback ถ้าเจอ error
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // ปิด connection
+      await queryRunner.release();
+    }
+  }
+
+  async returnBook(id: number, isbn: string): Promise<Book> {
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      // lock แถวนี้ไว้จนจบ transaction
+      const book = await queryRunner.manager.findOne(Book, {
+        where: { id, isbn },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (!book) {
+        throw new BadRequestException('Book not found');
+      }
+
+      book.quantity += 1;
+      const savedBook = await queryRunner.manager.save(book);
+      //  commit เมื่อทุกอย่างสำเร็จ
+      await queryRunner.commitTransaction();
+      return savedBook;
+    } catch (error) {
+      // rollback ถ้าเจอ error
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      // ปิด connection
+      await queryRunner.release();
+    }
+  }
 }
