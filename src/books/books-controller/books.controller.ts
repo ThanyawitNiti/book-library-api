@@ -13,10 +13,11 @@ import {
 } from '@nestjs/common';
 import { BooksService } from '../books-service/books.service';
 import { CreateBookDto, UpdateBookDto } from '../books-dto/bookDto.dto';
-import { AuthGuard } from 'src/auth/auth.guard';
 import { FileInterceptor } from '@nestjs/platform-express';
 import type * as multer from 'multer';
-import { fileStorage } from 'src/utils/file-upload';
+import { AuthGuard } from '../../auth/auth.guard';
+import { fileStorage } from '../../utils/file-upload';
+
 
 @Controller('books')
 @UseGuards(AuthGuard)
