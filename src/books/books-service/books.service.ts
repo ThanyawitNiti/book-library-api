@@ -41,7 +41,9 @@ export class BooksService {
         ...dto,
         // quantity: dto.quantity ?? 1,
         // cover_image: file ? `/uploads/${file.filename}` : undefined,
-        cover_image: file ? `http://localhost:8080/uploads/${file.filename}` : undefined,
+        cover_image: file
+          ? `http://localhost:8080/uploads/${file.filename}`
+          : undefined,
       });
       const newBook = await queryRunner.manager.save(book);
       await queryRunner.commitTransaction();
@@ -65,10 +67,32 @@ export class BooksService {
     return book;
   }
 
-  async update(id: number, dto: UpdateBookDto): Promise<Book> {
-    await this.findOne(id);
-    await this.bookRepo.update(id, dto);
-    return this.findOne(id);
+  // async update(id: number, dto: UpdateBookDto): Promise<Book> {
+  //   await this.findOne(id);
+  //   await this.bookRepo.update(id, dto);
+  //   return this.findOne(id);
+  // }
+  async update(
+    id: number,
+    dto: UpdateBookDto,
+    file?: multer.File,
+  ): Promise<Book> {
+    try {
+      const book = await this.findOne(id);
+      if (!book) {
+        throw new BadRequestException('Book not found');
+      }
+
+      // ถ้ามีไฟล์ใหม่ → set ค่า cover_image ใหม่
+      if (file) {
+        dto.cover_image = `http://localhost:8080/uploads/${file.filename}`;
+      }
+
+      await this.bookRepo.update(id, dto);
+      return this.findOne(id);
+    } catch (error) {
+      throw error;
+    }
   }
 
   async remove(id: number): Promise<void> {

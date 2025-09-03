@@ -63,8 +63,13 @@ export class BooksController {
   
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBookDto: UpdateBookDto) {
-    return this.booksService.update(+id, updateBookDto);
+  @UseInterceptors(FileInterceptor('cover_image', fileStorage)) // รองรับ multipart
+  async update(
+    @Param('id') id: string,
+    @Body() updateBookDto: UpdateBookDto,
+    @UploadedFile() file?: multer.File,
+  ) {
+    return this.booksService.update(+id, updateBookDto, file);
   }
 
   @Delete(':id')
