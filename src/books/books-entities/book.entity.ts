@@ -18,7 +18,7 @@ export class Book {
   publication_year: number;
 
   @Column({ nullable: true })
-  coverImage: string;
+  cover_image: string;
 
   @Column({ default: 1 })
   quantity: number;

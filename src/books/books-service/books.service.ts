@@ -40,7 +40,8 @@ export class BooksService {
       const book = queryRunner.manager.create(Book, {
         ...dto,
         // quantity: dto.quantity ?? 1,
-        coverImage: file ? `/uploads/${file.filename}` : undefined,
+        // cover_image: file ? `/uploads/${file.filename}` : undefined,
+        cover_image: file ? `http://localhost:8080/uploads/${file.filename}` : undefined,
       });
       const newBook = await queryRunner.manager.save(book);
       await queryRunner.commitTransaction();

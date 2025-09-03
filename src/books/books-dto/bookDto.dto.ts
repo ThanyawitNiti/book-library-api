@@ -16,10 +16,10 @@ export class CreateBookDto {
   publication_year?: number;
 
   @IsOptional()
-  coverImage?: string;
+  cover_image?: string;
 
   @IsNumber()
-  quantity: number;
+  quantity: number = 1;
 }
 
 export class UpdateBookDto extends PartialType(CreateBookDto) {}
