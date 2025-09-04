@@ -23,7 +23,7 @@ export class BooksService {
     await queryRunner.connect();
     await queryRunner.startTransaction();
     try {
-      // หาชื่อของหนังสือหากพบให้เพิ่มจำนวน
+      // หา ISBN ซ้ำ หากซ้ำให้ throw error (edit 04/09/2025)
       const foundBooks = await this.findByIsbn(dto.isbn);
       if (foundBooks.length > 0) {
         throw new BadRequestException('ISBN already exists');
